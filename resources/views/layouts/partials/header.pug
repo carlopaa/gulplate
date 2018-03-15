@@ -1,0 +1,26 @@
+nav.navbar.navbar-expand-lg.navbar-dark.bg-primary
+    .container
+        //- Brand
+        .navbar-brand Buildplate
+        //- Navbar button collapser
+        button.navbar-toggler(type="button",
+            data-toggle="collapse",
+            data-target=".navbar-collapse",
+            aria-controls="navbar-collapse",
+            aria-expanded="false", aria-label="Toggle Navigation")
+            span.navbar-toggler-icon
+        //- Navigation
+        .navbar-collapse.collapse
+            ul.navbar-nav
+                li.nav-item
+                    a.nav-link(href="/") Home
+                li.nav-item
+                    a.nav-link(href="#") About
+                li.nav-item
+                    a.nav-link(href="#") Contact
+
+            ul.navbar-nav.ml-auto
+                li.nav-item
+                    a.nav-link(href="#") Login
+                li.nav-item
+                    a.nav-link(href="#") Register

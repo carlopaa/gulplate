@@ -1,0 +1,35 @@
+{
+  "name": "buildplate",
+  "version": "1.0.0",
+  "description": "Starter kit",
+  "main": "index.js",
+  "author": "Carlo Paa <codingprogress@outlook.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "gulp clean && cross-env NODE_ENV=production gulp",
+    "dev": "cross-env NODE_ENV=development gulp browser-sync"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.23.6",
+    "cross-env": "^5.1.4",
+    "del": "^3.0.0",
+    "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^5.0.0",
+    "gulp-clean-css": "^3.9.3",
+    "gulp-if": "^2.0.2",
+    "gulp-imagemin": "^4.1.0",
+    "gulp-jshint": "^2.1.0",
+    "gulp-notify": "^3.2.0",
+    "gulp-plumber": "^1.2.0",
+    "gulp-pug": "^3.3.0",
+    "gulp-purifycss": "^0.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^3.1.0",
+    "gulp-uglify": "^3.0.0",
+    "imagemin-giflossy": "^5.1.10",
+    "imagemin-mozjpeg": "^7.0.0",
+    "imagemin-pngquant": "^5.0.1",
+    "imagemin-zopfli": "^5.1.0",
+    "jshint": "^2.9.5"
+  }
+}
