@@ -27,10 +27,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.2.0",
     "gulp-uglify": "^3.0.0",
-    "imagemin-giflossy": "^5.1.10",
-    "imagemin-mozjpeg": "^7.0.0",
-    "imagemin-pngquant": "^5.0.1",
-    "imagemin-zopfli": "^5.1.0",
     "jshint": "^2.9.5",
     "node-sass": "^4.8.2"
   }

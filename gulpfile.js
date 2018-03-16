@@ -12,10 +12,6 @@ const browserSync = require('browser-sync').create();
 const uglify = require('gulp-uglify');
 const jshint = require('gulp-jshint');
 const imagemin = require('gulp-imagemin');
-const imageminPngquant = require('imagemin-pngquant');
-const imageminZopfli = require('imagemin-zopfli');
-const imageminMozjpeg = require('imagemin-mozjpeg');
-const imageminGiflossy = require('imagemin-giflossy');
 const purify = require('gulp-purifycss');
 const notify = require('gulp-notify');
 const gulpIf = require('gulp-if');
@@ -89,31 +85,12 @@ gulp.task('vendor', () => {
 gulp.task('images', () => {
     return gulp.src(src.images)
         .pipe(newer(output.images))
-        .pipe(imagemin([
-            imageminPngquant({
-                speed: 1,
-                quality: 98
-            }),
-            imageminZopfli({
-                more: true
-            }),
-            imageminGiflossy({
-                optimizationLevel: 3,
-                optimize: 3,
-                lossy: 2
-            }),
-            imagemin.svgo({
-                plugins: [{
-                    removeViewBox: false
-                }]
-            }),
-            imagemin.jpegtran({
-                progressive: true
-            }),
-            imageminMozjpeg({
-                quality: 90
-            })
-        ]))
+        .pipe(imagemin({
+            interlaced: true,
+            progressive: true,
+            optimizationLevel: 5,
+            svgoPlugins: [{removeViewBox: true}]
+        }))
         .pipe(gulp.dest(output.images))
         .pipe(notify({message: 'Images loaded', onLast: true}));
 });
