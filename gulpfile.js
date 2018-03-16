@@ -19,6 +19,7 @@ const imageminGiflossy = require('imagemin-giflossy');
 const purify = require('gulp-purifycss');
 const notify = require('gulp-notify');
 const gulpIf = require('gulp-if');
+const newer = require('gulp-newer');
 const inProduction = process.env.NODE_ENV === 'production';
 
 const src = {
@@ -87,6 +88,7 @@ gulp.task('vendor', () => {
 
 gulp.task('images', () => {
     return gulp.src(src.images)
+        .pipe(newer(output.images))
         .pipe(imagemin([
             imageminPngquant({
                 speed: 1,
@@ -162,7 +164,7 @@ gulp.task('browser-sync', ['default'], () => {
     gulp.watch(['./resources/assets/sass/**/*.scss'], ['styles']);
     gulp.watch(src.view, ['views']);
     gulp.watch(src.js, ['scripts-watch']);
-    gulp.watch(src.image, ['images-watch']);
+    gulp.watch(src.images, ['images-watch']);
     gulp.watch(src.fonts, ['fonts-watch']);
     gulp.watch(src.vendor, ['vendor-watch']);
     gulp.watch(src.view + '/**/*.pug', ['view-watch']);
