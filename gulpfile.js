@@ -113,22 +113,22 @@ gulp.task('scripts-watch', ['scripts'], (done) => {
 gulp.task('images-watch', ['images'], (done) => {
     browserSync.reload();
     done();
-} );
+});
 
 gulp.task('fonts-watch', ['fonts'], (done) => {
     browserSync.reload();
     done();
-} );
+});
 
 gulp.task('vendor-watch', ['vendor'], (done) => {
     browserSync.reload();
     done();
-} );
+});
 
 gulp.task('view-watch', ['views'], (done) => {
     browserSync.reload();
     done();
-} );
+});
 
 gulp.task('browser-sync', ['default'], () => {
     browserSync.init({
