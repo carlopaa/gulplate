@@ -1,2 +1,2 @@
-# Builplate
-Just a simple boilerplate for creating html templates.
+# Gulplate
+Just a simple gulp based boilerplate / build system for creating html templates.
