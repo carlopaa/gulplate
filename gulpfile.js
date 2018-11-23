@@ -1,21 +1,21 @@
 'use strict';
 
-const gulp = require('gulp');
-const sass = require('gulp-sass');
-const prefixer = require('gulp-autoprefixer');
-const plumber = require('gulp-plumber');
-const rename = require('gulp-rename');
-const cssMinify = require('gulp-clean-css');
-const pug = require('gulp-pug');
 const del = require('del');
-const browserSync = require('browser-sync').create();
-const uglify = require('gulp-uglify');
-const jshint = require('gulp-jshint');
-const imagemin = require('gulp-imagemin');
-const purify = require('gulp-purifycss');
-const notify = require('gulp-notify');
+const gulp = require('gulp');
+const pug = require('gulp-pug');
+const sass = require('gulp-sass');
 const gulpIf = require('gulp-if');
 const newer = require('gulp-newer');
+const uglify = require('gulp-uglify');
+const rename = require('gulp-rename');
+const jshint = require('gulp-jshint');
+const notify = require('gulp-notify');
+const plumber = require('gulp-plumber');
+const purify = require('gulp-purifycss');
+const imagemin = require('gulp-imagemin');
+const cssMinify = require('gulp-clean-css');
+const prefixer = require('gulp-autoprefixer');
+const browserSync = require('browser-sync').create();
 const inProduction = process.env.NODE_ENV === 'production';
 
 const src = {
@@ -108,7 +108,7 @@ gulp.task('clean', () => {
 gulp.task('scripts-watch', ['scripts'], (done) => {
     browserSync.reload();
     done();
-} );
+});
 
 gulp.task('images-watch', ['images'], (done) => {
     browserSync.reload();
