@@ -19,12 +19,12 @@ const browser_sync = require('browser-sync').create();
 const in_production = process.env.NODE_ENV === 'production';
 
 const src = {
-    sass: 'resources/assets/sass/*.scss',
-    js: 'resources/assets/js/*.js',
-    views: 'resources/views',
-    vendor: 'resources/assets/vendor/**/*',
-    images: 'resources/assets/images/**/*.+(png|jpg|jpeg|gif|svg)',
-    fonts: 'resources/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
+    sass: 'src/assets/sass/*.scss',
+    js: 'src/assets/js/*.js',
+    views: 'src/views',
+    vendor: 'src/assets/vendor/**/*',
+    images: 'src/assets/images/**/*.+(png|jpg|jpeg|gif|svg)',
+    fonts: 'src/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
 }
 
 const output = {
