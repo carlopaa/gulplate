@@ -1,7 +1,7 @@
 {
   "name": "gulplate",
   "version": "1.0.0",
-  "description": "Gulp based boilerplate for creating html templates.",
+  "description": "Gulp based build system for developing html templates",
   "main": "index.js",
   "author": "Carlo Garcia Paa <dev@carlopaa.me>",
   "license": "MIT",
