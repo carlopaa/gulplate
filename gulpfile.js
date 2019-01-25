@@ -4,57 +4,69 @@ const del = require('del');
 const gulp = require('gulp');
 const pug = require('gulp-pug');
 const sass = require('gulp-sass');
-const gulpIf = require('gulp-if');
+const gulp_if = require('gulp-if');
 const newer = require('gulp-newer');
 const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
 const jshint = require('gulp-jshint');
 const notify = require('gulp-notify');
 const plumber = require('gulp-plumber');
-const purify = require('gulp-purifycss');
 const imagemin = require('gulp-imagemin');
-const cssMinify = require('gulp-clean-css');
+const purgecss = require('gulp-purgecss');
+const css_minify = require('gulp-clean-css');
 const prefixer = require('gulp-autoprefixer');
-const browserSync = require('browser-sync').create();
-const inProduction = process.env.NODE_ENV === 'production';
+const browser_sync = require('browser-sync').create();
+const in_production = process.env.NODE_ENV === 'production';
 
 const src = {
     sass: 'resources/assets/sass/*.scss',
     js: 'resources/assets/js/*.js',
-    view: 'resources/views',
+    views: 'resources/views',
     vendor: 'resources/assets/vendor/**/*',
     images: 'resources/assets/images/**/*.+(png|jpg|jpeg|gif|svg)',
     fonts: 'resources/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
-};
+}
 
 const output = {
     css: 'dist/assets/css',
     js: 'dist/assets/js',
-    view: 'dist',
+    views: 'dist',
     vendor: 'dist/assets/vendor',
     images: 'dist/assets/images',
     fonts: 'dist/assets/fonts'
-};
+}
 
-const onError = (error) => {
-    console.log(error);
-};
+/**
+ * Error log
+ */
+const onError = error => {
+    console.error(error);
+}
 
-gulp.task('styles', () => {
+/** Handles sass styles */
+function styles() {
     return gulp.src(src.sass)
         .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(sass({outputStyle: 'expanded'}))
         .pipe(prefixer({browsers: ['> 1%','last 2 versions']}))
-        .pipe(gulpIf(inProduction, purify([src.view + '/**/*.pug', src.js, output.view + '/**/*.html', src.vendor + '.js'])))
+        .pipe(gulp_if(in_production, purgecss({
+            content: [
+                src.views + '/**/*.pug',
+                src.js,
+                output.views + '/**/*.html',
+                src.vendor + '.js'
+            ]
+        })))
         .pipe(gulp.dest(output.css))
-        .pipe(cssMinify({compatibility: 'ie10'}))
+        .pipe(css_minify({compatibility: 'ie10'}))
         .pipe(rename({suffix: '.min'}))
         .pipe(gulp.dest(output.css))
-        .pipe(browserSync.stream())
+        .pipe(browser_sync.stream())
         .pipe(notify({message: 'Styles compiled', onLast: true}));
-});
+}
 
-gulp.task('scripts', () => {
+/** Handles scripts */
+function scripts() {
     return gulp.src(src.js)
         .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(jshint())
@@ -64,25 +76,28 @@ gulp.task('scripts', () => {
         .pipe(rename({suffix: '.min'}))
         .pipe(gulp.dest(output.js))
         .pipe(notify({message: 'Scripts compiled', onLast: true}));
-});
+}
 
-gulp.task('views', () => {
-    return gulp.src(src.view + '/*.pug')
+/** Handles Pug views */
+function views() {
+    return gulp.src(src.views + '/*.pug')
         .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(pug({
             pretty: "\t"
         }))
-        .pipe(gulp.dest(output.view))
+        .pipe(gulp.dest(output.views))
         .pipe(notify({message: 'Views compiled', onLast: true}));
-});
+}
 
-gulp.task('vendor', () => {
+/** Handles vendor plugins / library */
+function vendors() {
     return gulp.src(src.vendor)
         .pipe(gulp.dest(output.vendor))
         .pipe(notify({message: 'Vendor assets loaded', onLast: true}));
-});
+}
 
-gulp.task('images', () => {
+/** Handles images */
+function images() {
     return gulp.src(src.images)
         .pipe(newer(output.images))
         .pipe(imagemin({
@@ -93,61 +108,48 @@ gulp.task('images', () => {
         }))
         .pipe(gulp.dest(output.images))
         .pipe(notify({message: 'Images loaded', onLast: true}));
-});
+}
 
-gulp.task('fonts', () => {
+/** Handles fonts */
+function fonts() {
     return gulp.src(src.fonts)
         .pipe(gulp.dest(output.fonts))
         .pipe(notify({message: 'Fonts loaded', onLast: true}));
-});
+}
 
-gulp.task('clean', () => {
-    del('./dist');
-});
+/** Cleans the dist folder */
+function clean() {
+    return del('./dist');
+}
 
-gulp.task('scripts-watch', ['scripts'], (done) => {
-    browserSync.reload();
+/** Files to watch */
+function watchFiles(done) {
+    gulp.watch(src.sass.replace('*', '**/*'), styles);
+    gulp.watch(src.js, gulp.series(scripts, browserSyncReload));
+    gulp.watch(src.views + '/**/*.pug', gulp.series(views, browserSyncReload));
+    gulp.watch(src.images, images);
+    gulp.watch(src.fonts, fonts);
+    gulp.watch(src.vendor, vendors);
+
     done();
-});
+}
 
-gulp.task('images-watch', ['images'], (done) => {
-    browserSync.reload();
+/** Reloads BrowserSync */
+function browserSyncReload(done) {
+    browser_sync.reload();
     done();
-});
+}
 
-gulp.task('fonts-watch', ['fonts'], (done) => {
-    browserSync.reload();
-    done();
-});
-
-gulp.task('vendor-watch', ['vendor'], (done) => {
-    browserSync.reload();
-    done();
-});
-
-gulp.task('view-watch', ['views'], (done) => {
-    browserSync.reload();
-    done();
-});
-
-gulp.task('browser-sync', ['default'], () => {
-    browserSync.init({
+/** Initialize BrowserSync */
+function browserSync() {
+    return browser_sync.init({
         server: {
             baseDir: './dist'
         },
         open: false
     });
+}
 
-    gulp.watch(['./resources/assets/sass/**/*.scss'], ['styles']);
-    gulp.watch(src.view, ['views']);
-    gulp.watch(src.js, ['scripts-watch']);
-    gulp.watch(src.images, ['images-watch']);
-    gulp.watch(src.fonts, ['fonts-watch']);
-    gulp.watch(src.vendor, ['vendor-watch']);
-    gulp.watch(src.view + '/**/*.pug', ['view-watch']);
-    gulp.watch(output.view + '/*.html').on('change', browserSync.reload);
-});
-
-gulp.task('default', [
-    'styles', 'views', 'scripts', 'vendor', 'images', 'fonts'
-]);
+gulp.task('clean', clean);
+gulp.task('default', gulp.parallel(styles, scripts, views, fonts, images, vendors));
+gulp.task('watch', gulp.series(watchFiles, browserSync));
