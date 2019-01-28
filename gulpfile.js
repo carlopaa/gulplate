@@ -3,24 +3,30 @@
 const del = require('del');
 const gulp = require('gulp');
 const pug = require('gulp-pug');
+const tap = require('gulp-tap');
+const size = require('gulp-size');
 const sass = require('gulp-sass');
-const gulp_if = require('gulp-if');
-const webpack = require('webpack');
+const gulpIf = require('gulp-if');
 const newer = require('gulp-newer');
+const babelify = require('babelify');
 const uglify = require('gulp-uglify');
 const rename = require('gulp-rename');
-const jshint = require('gulp-jshint');
 const notify = require('gulp-notify');
 const eslint = require('gulp-eslint');
+const pkg = require('./package.json');
+const comment = require('gulp-header');
+const buffer = require('vinyl-buffer');
+const browserify = require('browserify');
 const plumber = require('gulp-plumber');
 const imagemin = require('gulp-imagemin');
 const purgecss = require('gulp-purgecss');
-const css_minify = require('gulp-clean-css');
+const npmDist = require('gulp-npm-dist');
+const cssMinify = require('gulp-clean-css');
 const prefixer = require('gulp-autoprefixer');
-const webpack_stream = require('webpack-stream');
-const webpack_config = require('./webpack.config.js');
-const browser_sync = require('browser-sync').create();
-const in_production = process.env.NODE_ENV === 'production';
+const source = require('vinyl-source-stream');
+const stripDebug = require('gulp-strip-debug');
+const browserSync = require('browser-sync').create();
+const inProduction = process.env.NODE_ENV === 'production';
 
 const src = {
     sass: 'src/assets/sass/*.scss',
@@ -31,7 +37,7 @@ const src = {
     fonts: 'src/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
 }
 
-const output = {
+const dist = {
     css: 'dist/assets/css',
     js: 'dist/assets/js',
     views: 'dist',
@@ -40,37 +46,106 @@ const output = {
     fonts: 'dist/assets/fonts'
 }
 
-/** Notify handler error message */
-function errorHandler() {
-    return {
-        errorHandler: notify.onError("Error: <%= error.message %>")
-    }
+/**
+ * Clean / deletes a folder
+ *
+ * @param  String folder
+ *
+ * @return Promise
+ */
+function clean () {
+    return del('./dist');
 }
 
-/** Handles sass styles */
-function styles() {
-    return gulp.src(src.sass)
+/**
+ * Header comments
+ *
+ * @return stream
+ */
+function header () {
+    return comment([
+        '/*!',
+        ` * ${ucwords(pkg.name.split('-').join(' '))} v${pkg.version} (${pkg.homepage})`,
+        ` * Licensed under ${pkg.license}`,
+        ` * (c) ${pkg.author}`,
+        ' */',
+        ''
+    ].join('\n'), { pkg: pkg });
+}
+
+/**
+ * Extracts npm dependencies in package.json
+ *
+ * @return stream
+ */
+function libraries () {
+    return gulp.src(npmDist(), { base: './node_modules' })
         .pipe(plumber(errorHandler()))
-        .pipe(sass({outputStyle: 'expanded'}))
-        .pipe(prefixer({browsers: ['> 1%','last 2 versions']}))
-        .pipe(gulp_if(in_production, purgecss({
-            content: [
-                src.views + '/**/*.pug',
-                src.js,
-                output.views + '/**/*.html',
-                src.vendor + '.js'
-            ]
-        })))
-        .pipe(gulp.dest(output.css))
-        .pipe(css_minify({compatibility: 'ie10'}))
-        .pipe(rename({suffix: '.min'}))
-        .pipe(gulp.dest(output.css))
-        .pipe(browser_sync.stream())
-        .pipe(notify({message: 'Styles compiled', onLast: true}));
+        .pipe(rename(path => path.dirname = path.dirname.replace(/\/dist/, '').replace(/\\dist/, '')))
+        .pipe(size({ title: 'npm packages' }))
+        .pipe(gulp.dest(dist.vendor))
+        .pipe(success('npm packages extracted'));
 }
 
-/** Handles js eslinting */
-function esLint() {
+/**
+ * Gets each npm dependency paths
+ *
+ * @param  String append
+ *
+ * @return Array
+ */
+function npmPackagePaths (append) {
+    let packages = [];
+
+    Object.keys(pkg.dependencies).map(function (dependency) {
+        packages.push(`node_modules/${dependency}/${append}`);
+    });
+
+    return packages;
+}
+
+/**
+ * Handles styles
+ * Converts sass to css
+ * Add vendor prefixes
+ * Removes unused css rules if NODE_ENV in production
+ *
+ * @return stream
+ */
+function styles () {
+    const toPurge = npmPackagePaths('**/*.js').concat([
+        src.views + '/**/*.pug',
+        src.js,
+        dist.views + '/**/*.html',
+    ]);
+
+    return gulp.src(src.sass)
+        .pipe(tap(function (f, t) {
+            const file = f.path;
+            const fileName = file.replace(/^.*[\\\/]/, '');
+
+            gulp.src(src.sass.replace('*.scss', '') + fileName)
+                .pipe(plumber(errorHandler()))
+                .pipe(sass({distStyle: 'expanded'}))
+                .pipe(prefixer())
+                .pipe(gulpIf(inProduction, purgecss({ content: toPurge })))
+                .pipe(gulpIf(fileName !== 'vendor.scss', header()))
+                .pipe(size({ showFiles: true }))
+                .pipe(gulp.dest(dist.css))
+                .pipe(cssMinify({compatibility: 'ie10'}))
+                .pipe(rename({suffix: '.min'}))
+                .pipe(size({ showFiles: true }))
+                .pipe(gulp.dest(dist.css))
+                .pipe(browserSync.stream());
+        })).pipe(success('Styles compiled'));
+}
+
+/**
+ * Eslinting
+ *
+ * @return stream
+ */
+function esLint () {
     return gulp.src([src.js])
         .pipe(plumber(errorHandler()))
         .pipe(eslint())
@@ -78,63 +153,97 @@ function esLint() {
         .pipe(eslint.failAfterError());
 }
 
-/** Handles scripts */
-function scripts() {
-    return gulp.src(src.js)
-        .pipe(plumber(errorHandler()))
-        .pipe(webpack_stream(webpack_config, webpack))
-        .pipe(gulp.dest(output.js))
-        .pipe(browser_sync.stream())
-        .pipe(notify({message: 'Scripts compiled', onLast: true}));
+/**
+ * Handles javascript
+ * Converts ES6 to ES5
+ * Minify and compress
+ *
+ * @return stream
+ */
+function scripts () {
+    return gulp.src(src.js).pipe(tap(function (f, t) {
+        const file = f.path;
+        const fileName = file.replace(/^.*[\\\/]/, '');
+
+        return browserify({ entries: src.js.replace('*.js', '') + fileName })
+            .transform(babelify, { presets: ['@babel/preset-env'] })
+            .bundle()
+            .pipe(source(fileName))
+            .pipe(buffer())
+            .pipe(gulpIf(inProduction, stripDebug()))
+            .pipe(gulpIf(fileName !== 'vendor.js', header()))
+            .pipe(size({ showFiles: true }))
+            .pipe(gulpIf(fileName !== 'vendor.js', gulp.dest(dist.js)))
+            .pipe(rename({ suffix: '.min' }))
+            .pipe(uglify())
+            .pipe(gulpIf(fileName !== 'vendor.js', header()))
+            .pipe(size({ showFiles: true }))
+            .pipe(gulp.dest(dist.js))
+            .pipe(browserSync.stream())
+            .pipe(success('Scripts compiled'));
+    }));
 }
 
-/** Handles Pug views */
-function views() {
+/**
+ * Handles pug / jade template and converts to html
+ *
+ * @return stream
+ */
+function views () {
     return gulp.src(src.views + '/*.pug')
         .pipe(plumber(errorHandler()))
-        .pipe(pug({
-            pretty: "\t"
-        }))
-        .pipe(gulp.dest(output.views))
-        .pipe(browser_sync.stream())
-        .pipe(notify({message: 'Views compiled', onLast: true}));
+        .pipe(pug({ pretty: "\t" }))
+        .pipe(size({ showFiles: true }))
+        .pipe(gulp.dest(dist.views))
+        .pipe(browserSync.stream())
+        .pipe(success('Views compiled'));
 }
 
-/** Handles vendor plugins / library */
-function vendors() {
-    return gulp.src(src.vendor)
-        .pipe(gulp.dest(output.vendor))
-        .pipe(notify({message: 'Vendor assets loaded', onLast: true}));
-}
+/**
+ * Handles image copy and optimization
+ *
+ * @return stream
+ */
+function images () {
+    const options = [
+        imagemin.gifsicle({ interlaced: true }),
+        imagemin.jpegtran({ progressive: true }),
+        imagemin.optipng({ optimizationLevel: 5 }),
+        imagemin.svgo({
+            plugins: [{
+                removeViewBox: false,
+                collapseGroups: true
+            }]
+        })
+    ];
 
-/** Handles images */
-function images() {
     return gulp.src(src.images)
-        .pipe(newer(output.images))
-        .pipe(imagemin({
-            interlaced: true,
-            progressive: true,
-            optimizationLevel: 5,
-            svgoPlugins: [{removeViewBox: true}]
-        }))
-        .pipe(gulp.dest(output.images))
-        .pipe(notify({message: 'Images loaded', onLast: true}));
+        .pipe(newer(dist.images))
+        .pipe(imagemin(options, { verbose: true }))
+        .pipe(gulp.dest(dist.images))
+        .pipe(success('Images loaded'));
 }
 
-/** Handles fonts */
-function fonts() {
+/**
+ * Copies fonts from src to dist
+ *
+ * @return stream
+ */
+function fonts () {
     return gulp.src(src.fonts)
-        .pipe(gulp.dest(output.fonts))
-        .pipe(notify({message: 'Fonts loaded', onLast: true}));
+        .pipe(size({ showFiles: true }))
+        .pipe(gulp.dest(dist.fonts))
+        .pipe(success('Fonts loaded'));
 }
 
-/** Cleans the dist folder */
-function clean() {
-    return del('./dist');
-}
-
-/** Files to watch */
-function watchFiles(done) {
+/**
+ * Watch files for changes and trigger task
+ *
+ * @param  Function done
+ *
+ * @return callback
+ */
+function watchFiles (done) {
     gulp.watch(src.sass.replace('*', '**/*'), styles);
     gulp.watch(src.js, gulp.series(esLint, scripts));
     gulp.watch(src.views + '/**/*.pug', views);
@@ -145,15 +254,24 @@ function watchFiles(done) {
     done();
 }
 
-/** Reloads BrowserSync */
-function browserSyncReload(done) {
-    browser_sync.reload();
+/**
+ * Reloads browser sync
+ * @param  Function done
+ *
+ * @return callback
+ */
+function browserSyncReload (done) {
+    browserSync.reload();
     done();
 }
 
-/** Initialize BrowserSync */
-function browserSync() {
-    return browser_sync.init({
+/**
+ * Initialize browser sync
+ *
+ * @return stream
+ */
+function sync () {
+    return browserSync.init({
         server: {
             baseDir: './dist'
         },
@@ -161,6 +279,38 @@ function browserSync() {
     });
 }
 
+/**
+ * Capitalize every first character of each word
+ *
+ * @param  String str
+ *
+ * @return String
+ */
+function ucwords(str) {
+    return (str + '').replace(/^(.)|\s+(.)/g, function ($1) {
+        return $1.toUpperCase();
+    });
+}
+
+/**
+ * Notify handler error message
+ *
+ * @return Object
+ */
+function errorHandler () {
+    return {
+        errorHandler: notify.onError("Error: <%= error.message %>")
+    }
+}
+
+function success (message) {
+    return notify({
+        message: message,
+        onLast: true
+    });
+}
+
+/** Gulp tasks */
 gulp.task('clean', clean);
-gulp.task('default', gulp.parallel(styles, gulp.series(esLint, scripts), views, fonts, images, vendors));
-gulp.task('watch', gulp.series(watchFiles, browserSync));
+gulp.task('watch', gulp.series(watchFiles, sync));
+gulp.task('default', gulp.parallel(views, fonts, images, libraries, gulp.series(esLint, scripts), styles));

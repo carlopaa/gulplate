@@ -7,33 +7,67 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp clean && cross-env NODE_ENV=production gulp",
-    "dev": "gulp clean && cross-env NODE_ENV=development gulp watch default"
+    "dev": "gulp clean && cross-env NODE_ENV=development gulp watch default",
+    "build:webpack": "cross-env NODE_ENV=production webpack --hide-modules --progress"
   },
+  "repository": "carlopaa/gulplate",
+  "homepage": "https://github.com/carlopaa/gulplate#readme",
+  "bugs": {
+    "url": "https://github.com/carlopaa/gulplate/issues"
+  },
+  "keywords": [
+    "gulp",
+    "template",
+    "boilerplate",
+    "starter kit",
+    "html",
+    "sass",
+    "pug",
+    "jade",
+    "babel loader",
+    "es6",
+    "compile",
+    "browser sync"
+  ],
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ],
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.3.1",
     "babel-loader": "^8.0.5",
+    "babelify": "^10.0.0",
     "browser-sync": "^2.26.3",
+    "browserify": "^16.2.3",
     "cross-env": "^5.2.0",
     "del": "^3.0.0",
     "gulp": "^4.0.0",
     "gulp-autoprefixer": "^6.0.0",
     "gulp-clean-css": "^4.0.0",
     "gulp-eslint": "^5.0.0",
+    "gulp-header": "^2.0.7",
     "gulp-if": "^2.0.2",
     "gulp-imagemin": "^5.0.3",
-    "gulp-jshint": "^2.1.0",
     "gulp-newer": "^1.4.0",
     "gulp-notify": "^3.2.0",
+    "gulp-npm-dist": "^1.0.2",
     "gulp-plumber": "^1.2.1",
     "gulp-pug": "^4.0.1",
     "gulp-purgecss": "^1.1.1",
     "gulp-rename": "^1.4.0",
     "gulp-sass": "^4.0.2",
+    "gulp-size": "^3.0.0",
+    "gulp-strip-debug": "^3.0.0",
+    "gulp-tap": "^1.0.1",
     "gulp-uglify": "^3.0.1",
-    "jshint": "^2.9.7",
     "node-sass": "^4.11.0",
-    "webpack": "^4.29.0",
-    "webpack-stream": "^5.2.1"
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
+  },
+  "dependencies": {
+    "bootstrap": "^4.2.1",
+    "jquery": "^3.3.1",
+    "popper.js": "^1.14.6"
   }
 }
