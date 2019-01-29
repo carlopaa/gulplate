@@ -7,8 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp clean && cross-env NODE_ENV=production gulp",
-    "dev": "gulp clean && cross-env NODE_ENV=development gulp watch default",
-    "build:webpack": "cross-env NODE_ENV=production webpack --hide-modules --progress"
+    "dev": "gulp clean && cross-env NODE_ENV=development gulp watch default"
   },
   "repository": "carlopaa/gulplate",
   "homepage": "https://github.com/carlopaa/gulplate#readme",
