@@ -63,9 +63,11 @@ function clean () {
  * @return stream
  */
 function header () {
+    const homepage = pkg.homepage ? `(${pkg.homepage})` : '';
+
     return comment([
         '/*!',
-        ` * ${ucwords(pkg.name.split('-').join(' '))} v${pkg.version} (${pkg.homepage})`,
+        ` * ${ucwords(pkg.name.split('-').join(' '))} v${pkg.version} ${homepage}`,
         ` * Licensed under ${pkg.license}`,
         ` * (c) ${pkg.author}`,
         ' */',
