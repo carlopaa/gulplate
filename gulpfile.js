@@ -32,7 +32,6 @@ const src = {
     sass: 'src/assets/sass/*.scss',
     js: 'src/assets/js/*.js',
     views: 'src/views',
-    vendor: 'src/assets/vendor/**/*',
     images: 'src/assets/images/**/*.+(png|jpg|jpeg|gif|svg)',
     fonts: 'src/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
 }
@@ -251,7 +250,6 @@ function watchFiles (done) {
     gulp.watch(src.views + '/**/*.pug', views);
     gulp.watch(src.images, images);
     gulp.watch(src.fonts, fonts);
-    gulp.watch(src.vendor, vendors);
 
     done();
 }
