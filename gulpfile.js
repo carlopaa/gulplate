@@ -127,7 +127,7 @@ function styles () {
 
             gulp.src(src.sass.replace('*.scss', '') + fileName)
                 .pipe(plumber(errorHandler()))
-                .pipe(sass({distStyle: 'expanded'}))
+                .pipe(sass({outputStyle: 'expanded'}))
                 .pipe(prefixer())
                 .pipe(gulpIf(inProduction, purgecss({ content: toPurge })))
                 .pipe(gulpIf(fileName !== 'vendor.scss', header()))
