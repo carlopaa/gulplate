@@ -32,6 +32,7 @@ const src = {
     sass: 'src/assets/sass/*.scss',
     js: 'src/assets/js/*.js',
     views: 'src/views',
+    vendor: 'src/assets/vendor/**/*',
     images: 'src/assets/images/**/*.+(png|jpg|jpeg|gif|svg)',
     fonts: 'src/assets/fonts/**/*.+(svg|eot|ttf|woff|woff2)'
 }
@@ -75,11 +76,22 @@ function header () {
 }
 
 /**
- * Extracts npm dependencies in package.json
+ * Extracts vendors / libraries from src to dist
  *
  * @return stream
  */
-function libraries () {
+function vendors () {
+    return gulp.src(src.vendor)
+        .pipe(gulp.dest(dist.vendor))
+        .pipe(success('Vendors extracted'));
+}
+
+/**
+ * Extracts npm dependencies
+ *
+ * @return stream
+ */
+function npmPackages () {
     return gulp.src(npmDist(), { base: './node_modules' })
         .pipe(plumber(errorHandler()))
         .pipe(rename(path => path.dirname = path.dirname.replace(/\/dist/, '').replace(/\\dist/, '')))
@@ -250,6 +262,7 @@ function watchFiles (done) {
     gulp.watch(src.views + '/**/*.pug', views);
     gulp.watch(src.images, images);
     gulp.watch(src.fonts, fonts);
+    gulp.watch(src.vendor, vendors);
 
     done();
 }
@@ -313,4 +326,4 @@ function success (message) {
 /** Gulp tasks */
 gulp.task('clean', clean);
 gulp.task('watch', gulp.series(watchFiles, sync));
-gulp.task('default', gulp.parallel(views, fonts, images, libraries, gulp.series(esLint, scripts), styles));
+gulp.task('default', gulp.parallel(views, fonts, images, npmPackages, vendors, styles, gulp.series(esLint, scripts)));
